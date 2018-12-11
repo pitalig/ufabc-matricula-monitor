@@ -41,6 +41,15 @@
 (defn get-endpoint [key]
   (-> discovery key :endpoint))
 
+(defn alert-error! [exception]
+  (slack/message "#random" (str "ERRO: \n" (.getMessage exception)))
+  (println (str "Raw error:\n"
+             exception
+             "\nError message:\n"
+             (.getMessage exception)
+             "\nError data:\n"
+             (ex-data exception))))
+
 ; try to make this req/parse as a separate and generic function for all endpoints with request timeout and try-catch
 (defn parse-matriculas []
   (-> (get-endpoint :matriculas)
@@ -57,13 +66,7 @@
          (replace-first #"contagemMatriculas=" "")
          (replace-first #"\n" "")
          json/parse-string)
-       (catch Exception e (do (slack/message "#random" (str "ERRO: \n"(.getMessage e)))
-                              (println (str "Raw error:\n"
-                                         e
-                                         "\nError message:\n"
-                                         (.getMessage e)
-                                         "\nError data:\n"
-                                         (ex-data e)))
+       (catch Exception e (do (alert-error! e)
                               (Thread/sleep 15000)
                               (parse-contagem)))))
 
