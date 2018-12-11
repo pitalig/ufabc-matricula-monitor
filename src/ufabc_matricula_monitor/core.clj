@@ -1,7 +1,7 @@
 (ns ufabc-matricula-monitor.core
   (:gen-class)
   (:require [ufabc-matricula-monitor.slack :as slack]
-            [clj-http.client :as client]
+            [clj-http.client :as http]
             [cheshire.core :as json]
             [clojure.string :refer (replace-first)]
             [clojure.data :refer [diff]]))
@@ -50,10 +50,24 @@
              "\nError data:\n"
              (ex-data exception))))
 
+(defn secure-get! [url & {:keys [max-retries base-interval-sec]
+                          :or {max-retries 5, base-interval-sec 5}}]
+  (loop [t 0]
+    (let [result (try (http/get url)
+                      (catch Exception e
+                        (if (< max-retries t)
+                          (throw e)
+                          nil)))]
+      (or
+        result
+        (do
+          (Thread/sleep (* t t base-interval-sec 1000))
+          (recur (inc t)))))))
+
 ; try to make this req/parse as a separate and generic function for all endpoints with request timeout and try-catch
 (defn parse-matriculas []
   (-> (get-endpoint :matriculas)
-    client/get
+    secure-get!
     :body
     (replace-first #"matriculas=" "")
     (replace-first #"\n" "")
@@ -61,7 +75,7 @@
 
 (defn parse-contagem []
   (try (-> (get-endpoint :contagem-matriculas)
-         client/get
+         secure-get!
          :body
          (replace-first #"contagemMatriculas=" "")
          (replace-first #"\n" "")
@@ -72,7 +86,7 @@
 
 (def disciplinas
   (delay (-> (get-endpoint :todas-disciplinas)
-           (client/get)
+           (secure-get!)
            :body
            (replace-first #"todasDisciplinas=" "")
            (replace-first #"\n" "")
