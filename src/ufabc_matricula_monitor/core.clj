@@ -7,36 +7,36 @@
             [clojure.data :refer [diff]]))
 
 (def discovery
-  {:matriculas          {:endpoint "https://matricula.ufabc.edu.br/cache/matriculas.js"
-                         :doc      "PROVAVELMENTE: mapa com lista de disciplinas matrículadas para cada id de aluno"}
+  {:matriculas {:endpoint "https://matricula.ufabc.edu.br/cache/matriculas.js"
+                :doc "PROVAVELMENTE: mapa com lista de disciplinas matrículadas para cada id de aluno"}
    :contagem-matriculas {:endpoint "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
-                         :doc      "Mapa de número de requisições por disciplina"
-                         :eg       {"825" "90"}}
-   :todas-disciplinas   {:endpoint "https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
-                         :doc      "Lista de informações das disciplinas"
-                         :eg       [{:horarios           [{:horas                 ["21:00" "21:30" "22:00" "22:30" "23:00"]
-                                                           :periodicidade_extenso " - semanal"
-                                                           :semana                2}
-                                                          {:horas                 ["19:00" "19:30" "20:00" "20:30" "21:00"]
-                                                           :periodicidade_extenso " - quinzenal (I)"
-                                                           :semana                4}
-                                                          {:horas                 ["19:00" "19:30" "20:00" "20:30" "21:00"]
-                                                           :periodicidade_extenso " - quinzenal (II)"
-                                                           :semana                4}]
-                                     :nome               "Visão Computacional A-Noturno (Santo André)"
-                                     :vagas              31
-                                     :creditos           4
-                                     :obrigatoriedades   [{:curso_id        1
-                                                           :obrigatoriedade "limitada"}
-                                                          {:curso_id        17
-                                                           :obrigatoriedade "limitada"}]
-                                     :vagas_ingressantes nil
-                                     :codigo             "ESZA019-17"
-                                     :id                 825
-                                     :nome_campus        "Campus Santo André"
-                                     :recomendacoes      nil
-                                     :campus             1
-                                     :tpi                [3 1 4]}]}})
+                         :doc "Mapa de número de requisições por disciplina"
+                         :eg {"825" "90"}}
+   :todas-disciplinas {:endpoint "https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
+                       :doc "Lista de informações das disciplinas"
+                       :eg [{:horarios [{:horas ["21:00" "21:30" "22:00" "22:30" "23:00"]
+                                         :periodicidade_extenso " - semanal"
+                                         :semana 2}
+                                        {:horas ["19:00" "19:30" "20:00" "20:30" "21:00"]
+                                         :periodicidade_extenso " - quinzenal (I)"
+                                         :semana 4}
+                                        {:horas ["19:00" "19:30" "20:00" "20:30" "21:00"]
+                                         :periodicidade_extenso " - quinzenal (II)"
+                                         :semana 4}]
+                             :nome "Visão Computacional A-Noturno (Santo André)"
+                             :vagas 31
+                             :creditos 4
+                             :obrigatoriedades [{:curso_id 1
+                                                 :obrigatoriedade "limitada"}
+                                                {:curso_id 17
+                                                 :obrigatoriedade "limitada"}]
+                             :vagas_ingressantes nil
+                             :codigo "ESZA019-17"
+                             :id 825
+                             :nome_campus "Campus Santo André"
+                             :recomendacoes nil
+                             :campus 1
+                             :tpi [3 1 4]}]}})
 
 (defn get-endpoint [key]
   (-> discovery key :endpoint))
