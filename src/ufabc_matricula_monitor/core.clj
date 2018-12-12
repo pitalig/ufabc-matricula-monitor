@@ -9,8 +9,6 @@
             [clojure.spec.alpha :as s]
             [clojure.spec.test.alpha :as stest]))
 
-(stest/instrument)
-
 (s/def ::url string?)
 (s/def ::max-retries int?)
 (s/def ::base-interval-sec int?)
@@ -62,29 +60,25 @@
   :args (s/cat :url ::url
                :kwargs (s/keys* :req-un [::max-retries ::base-interval-sec]))
   :ret (s/keys :opt [::body ::status]))
-(test/with-test
-  (defn secure-get!
-    "Send a http get to an url.
-     If it fails, will retry `max-retries` times with an exponential sleep betwen retries."
-    [url & {:keys [max-retries base-interval-sec]
-            :or {max-retries 5, base-interval-sec 5}}]
-    (loop [t 0]
-      (let [result (try (http/get url)
-                        (catch Exception e
-                          (if (< max-retries t)
-                            (throw e)
-                            nil)))]
-        (or
-          result
-          (do
-            (Thread/sleep (* t t base-interval-sec 1000))
-            (recur (inc t)))))))
-  (test/is (let [{:keys [body status]} (secure-get! "https://www.google.com")]
-             (and (string? body)
-                  (= 200 status))))
+(defn secure-get!
+  "Send a http get to an url.
+   If it fails, will retry `max-retries` times with an exponential sleep betwen retries."
+  [url & {:keys [max-retries base-interval-sec]
+          :or {max-retries 5, base-interval-sec 5}}]
+  (loop [t 0]
+    (let [result (try (http/get url)
+                      (catch Exception e
+                        (if (< max-retries t)
+                          (throw e)
+                          nil)))]
+      (or
+        result
+        (do
+          (Thread/sleep (* t t base-interval-sec 1000))
+          (recur (inc t)))))))
 
-  (defn secure-get-endpoint! [endpoint]
-    (-> discovery endpoint :url secure-get!)))
+(defn secure-get-endpoint! [endpoint]
+  (-> discovery endpoint :url secure-get!))
 
 (defn parse-matriculas []
   (-> (secure-get-endpoint! :matriculas)
@@ -151,8 +145,6 @@
            (Thread/sleep 15000)
            (recur updated-contagem)))
        (catch Exception ex (do (println (ex-data ex)) (slack/message "#general" (str ":fire: :fire: :fire: :fire: \n" (ex-data ex)))))))
-
-(stest/unstrument)
 
 (defn -main
   [& args]
