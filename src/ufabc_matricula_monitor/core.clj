@@ -4,15 +4,26 @@
             [clj-http.client :as http]
             [cheshire.core :as json]
             [clojure.string :refer (replace-first)]
-            [clojure.data :refer [diff]]))
+            [clojure.data :refer [diff]]
+            [clojure.test :as test]
+            [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]))
+
+(stest/instrument)
+
+(s/def ::url string?)
+(s/def ::max-retries int?)
+(s/def ::base-interval-sec int?)
+(s/def ::body string?)
+(s/def ::status int?)
 
 (def discovery
-  {:matriculas {:endpoint "https://matricula.ufabc.edu.br/cache/matriculas.js"
+  {:matriculas {:url "https://matricula.ufabc.edu.br/cache/matriculas.js"
                 :doc "PROVAVELMENTE: mapa com lista de disciplinas matrículadas para cada id de aluno"}
-   :contagem-matriculas {:endpoint "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
+   :contagem-matriculas {:url "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
                          :doc "Mapa de número de requisições por disciplina"
                          :eg {"825" "90"}}
-   :todas-disciplinas {:endpoint "https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
+   :todas-disciplinas {:url "https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
                        :doc "Lista de informações das disciplinas"
                        :eg [{:horarios [{:horas ["21:00" "21:30" "22:00" "22:30" "23:00"]
                                          :periodicidade_extenso " - semanal"
@@ -38,9 +49,6 @@
                              :campus 1
                              :tpi [3 1 4]}]}})
 
-(defn get-endpoint [key]
-  (-> discovery key :endpoint))
-
 (defn alert-error! [exception]
   (slack/message "#random" (str "ERRO: \n" (.getMessage exception)))
   (println (str "Raw error:\n"
@@ -50,47 +58,57 @@
              "\nError data:\n"
              (ex-data exception))))
 
-(defn secure-get! [url & {:keys [max-retries base-interval-sec]
-                          :or {max-retries 5, base-interval-sec 5}}]
-  (loop [t 0]
-    (let [result (try (http/get url)
-                      (catch Exception e
-                        (if (< max-retries t)
-                          (throw e)
-                          nil)))]
-      (or
-        result
-        (do
-          (Thread/sleep (* t t base-interval-sec 1000))
-          (recur (inc t)))))))
+(s/fdef secure-get!
+  :args (s/cat :url ::url
+               :kwargs (s/keys* :req-un [::max-retries ::base-interval-sec]))
+  :ret (s/keys :opt [::body ::status]))
+(test/with-test
+  (defn secure-get!
+    "Send a http get to an url.
+     If it fails, will retry `max-retries` times with an exponential sleep betwen retries."
+    [url & {:keys [max-retries base-interval-sec]
+            :or {max-retries 5, base-interval-sec 5}}]
+    (loop [t 0]
+      (let [result (try (http/get url)
+                        (catch Exception e
+                          (if (< max-retries t)
+                            (throw e)
+                            nil)))]
+        (or
+          result
+          (do
+            (Thread/sleep (* t t base-interval-sec 1000))
+            (recur (inc t)))))))
+  (test/is (let [{:keys [body status]} (secure-get! "https://www.google.com")]
+             (and (string? body)
+                  (= 200 status))))
 
-; try to make this req/parse as a separate and generic function for all endpoints with request timeout and try-catch
+  (defn secure-get-endpoint! [endpoint]
+    (-> discovery endpoint :url secure-get!)))
+
 (defn parse-matriculas []
-  (-> (get-endpoint :matriculas)
-    secure-get!
-    :body
-    (replace-first #"matriculas=" "")
-    (replace-first #"\n" "")
-    json/parse-string))
+  (-> (secure-get-endpoint! :matriculas)
+      :body
+      (replace-first #"matriculas=" "")
+      (replace-first #"\n" "")
+      json/parse-string))
 
 (defn parse-contagem []
-  (try (-> (get-endpoint :contagem-matriculas)
-         secure-get!
-         :body
-         (replace-first #"contagemMatriculas=" "")
-         (replace-first #"\n" "")
-         json/parse-string)
+  (try (-> (secure-get-endpoint! :contagem-matriculas)
+           :body
+           (replace-first #"contagemMatriculas=" "")
+           (replace-first #"\n" "")
+           json/parse-string)
        (catch Exception e (do (alert-error! e)
                               (Thread/sleep 15000)
                               (parse-contagem)))))
 
 (def disciplinas
-  (delay (-> (get-endpoint :todas-disciplinas)
-           (secure-get!)
-           :body
-           (replace-first #"todasDisciplinas=" "")
-           (replace-first #"\n" "")
-           (json/parse-string true))))
+  (delay (-> (secure-get-endpoint! :todas-disciplinas)
+             :body
+             (replace-first #"todasDisciplinas=" "")
+             (replace-first #"\n" "")
+             (json/parse-string true))))
 
 (defn id->disciplina [id]
   (first (filter #(= id (str (:id %))) @disciplinas)))
@@ -134,6 +152,7 @@
            (recur updated-contagem)))
        (catch Exception ex (do (println (ex-data ex)) (slack/message "#general" (str ":fire: :fire: :fire: :fire: \n" (ex-data ex)))))))
 
+(stest/unstrument)
 
 (defn -main
   [& args]
