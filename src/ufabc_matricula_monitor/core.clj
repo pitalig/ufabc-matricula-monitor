@@ -5,9 +5,7 @@
             [cheshire.core :as json]
             [clojure.string :refer (replace-first)]
             [clojure.data :refer [diff]]
-            [clojure.test :as test]
-            [clojure.spec.alpha :as s]
-            [clojure.spec.test.alpha :as stest]))
+            [clojure.spec.alpha :as s]))
 
 (s/def ::url string?)
 (s/def ::max-retries int?)
@@ -17,35 +15,14 @@
 
 (def discovery
   {:matriculas {:url "https://matricula.ufabc.edu.br/cache/matriculas.js"
-                :doc "PROVAVELMENTE: mapa com lista de disciplinas matrículadas para cada id de aluno"}
+                :doc "Mapa com lista de disciplinas matrículadas para cada id de aluno"
+                :eg-path "resources/matriculas_sample.txt"}
    :contagem-matriculas {:url "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
                          :doc "Mapa de número de requisições por disciplina"
-                         :eg {"825" "90"}}
+                         :eg-path "resources/contagem_matriculas_sample.txt"}
    :todas-disciplinas {:url "https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
                        :doc "Lista de informações das disciplinas"
-                       :eg [{:horarios [{:horas ["21:00" "21:30" "22:00" "22:30" "23:00"]
-                                         :periodicidade_extenso " - semanal"
-                                         :semana 2}
-                                        {:horas ["19:00" "19:30" "20:00" "20:30" "21:00"]
-                                         :periodicidade_extenso " - quinzenal (I)"
-                                         :semana 4}
-                                        {:horas ["19:00" "19:30" "20:00" "20:30" "21:00"]
-                                         :periodicidade_extenso " - quinzenal (II)"
-                                         :semana 4}]
-                             :nome "Visão Computacional A-Noturno (Santo André)"
-                             :vagas 31
-                             :creditos 4
-                             :obrigatoriedades [{:curso_id 1
-                                                 :obrigatoriedade "limitada"}
-                                                {:curso_id 17
-                                                 :obrigatoriedade "limitada"}]
-                             :vagas_ingressantes nil
-                             :codigo "ESZA019-17"
-                             :id 825
-                             :nome_campus "Campus Santo André"
-                             :recomendacoes nil
-                             :campus 1
-                             :tpi [3 1 4]}]}})
+                       :eg "resources/todas_disciplinas_sample.txt"}})
 
 (defn alert-error! [exception]
   (slack/message "#random" (str "ERRO: \n" (.getMessage exception)))
@@ -80,22 +57,13 @@
 (defn secure-get-endpoint! [endpoint]
   (-> discovery endpoint :url secure-get!))
 
-(defn parse-matriculas []
-  (-> (secure-get-endpoint! :matriculas)
+(s/fdef parse-response
+  :args (s/cat :raw-response (s/keys :req-un [::body])))
+(defn parse-response [raw-response]
+  (-> raw-response
       :body
-      (replace-first #"matriculas=" "")
-      (replace-first #"\n" "")
+      (replace-first #".*=" "")
       json/parse-string))
-
-(defn parse-contagem []
-  (try (-> (secure-get-endpoint! :contagem-matriculas)
-           :body
-           (replace-first #"contagemMatriculas=" "")
-           (replace-first #"\n" "")
-           json/parse-string)
-       (catch Exception e (do (alert-error! e)
-                              (Thread/sleep 15000)
-                              (parse-contagem)))))
 
 (def disciplinas
   (delay (-> (secure-get-endpoint! :todas-disciplinas)
@@ -136,8 +104,8 @@
 
 (defn start! []
   (slack/message "#random" "Starting!")
-  (try (loop [contagem (parse-contagem)]
-         (let [updated-contagem (parse-contagem)]
+  (try (loop [contagem (parse-response (secure-get-endpoint! :contagem-matriculas))]
+         (let [updated-contagem (parse-response (secure-get-endpoint! :contagem-matriculas))]
            (if (= contagem updated-contagem)
              (println "Nothing changed")
              (do (println "Changes!")
