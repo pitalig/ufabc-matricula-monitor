@@ -1,0 +1,4 @@
+#kaocha/v1
+    {:plugins [:kaocha.plugin/print-invocations
+               :kaocha.plugin/profiling]
+     :reporter kaocha.report/documentation}

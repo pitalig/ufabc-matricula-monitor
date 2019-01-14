@@ -9,4 +9,6 @@
                  [nubank/matcher-combinators "0.4.2"]]
   :main ^:skip-aot ufabc-matricula-monitor.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}
+             :kaocha {:dependencies [[lambdaisland/kaocha "0.0-343"]]}}
+  :aliases {"kaocha" ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]})
