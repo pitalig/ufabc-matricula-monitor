@@ -3,14 +3,16 @@
             [clojure.spec.test.alpha :as stest]
             [ufabc-matricula-monitor.core :as core]
             [matcher-combinators.test]
-            [matcher-combinators.matchers :as m]))
+            [matcher-combinators.matchers :as m]
+            [clj-http.client :as http]))
 
 (stest/instrument)
 
 (deftest secure-get!
-  (is (let [{:keys [body status]} (core/secure-get! "https://www.google.com")]
-        (and (string? body)
-             (= 200 status)))))
+  (with-redefs [http/get (constantly {:body "html" :status 200})]
+    (is (let [{:keys [body status]} (core/secure-get! "https://www.google.com")]
+          (and (string? body)
+               (= 200 status))))))
 
 (deftest parse-response
   (are [result sample-path]
