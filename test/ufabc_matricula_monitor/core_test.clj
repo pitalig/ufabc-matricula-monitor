@@ -8,11 +8,24 @@
 
 (stest/instrument)
 
+(deftest map-keys
+  (is (= {123 "456"}
+         (core/map-keys {"123" "456"} core/parse-int)))
+  (is (= {"123" 456}
+         (core/map-keys {123 456} str))))
+
+(deftest map-vals
+  (is (= {"123" 456}
+         (core/map-vals {"123" "456"} core/parse-int)))
+  (is (= {123 "456"}
+         (core/map-vals {123 456} str))))
+
 (deftest map-kv
-  (is (= (core/map-kv {"123" "456"} core/parse-int)
-         {123 456}))
-  (is (= (core/map-kv {123 456} str)
-         {"123" "456"})))
+  (is (= {123 456}
+         (core/map-kv {"123" "456"} core/parse-int)))
+  (is (= {"123" "456"}
+         (core/map-kv {123 456} str))))
+
 
 (deftest secure-get!
   (with-redefs [http/get (constantly {:body "html" :status 200})]
