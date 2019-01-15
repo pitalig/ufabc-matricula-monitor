@@ -39,6 +39,12 @@
           4994 [8417 8448 8484 8595 8492]}
          (core/coerce-matriculas (core/parse-response matriculas-sample)))))
 
+(deftest coerce-contagem-matriculas
+  (is (= {8290 77
+          8623 1
+          8682 94}
+         (core/coerce-contagem-matriculas (core/parse-response contagem-matriculas-sample)))))
+
 (deftest secure-get!
   (with-redefs [http/get (constantly {:body "html" :status 200})]
     (is (let [{:keys [body status]} (core/secure-get! "https://www.google.com")]

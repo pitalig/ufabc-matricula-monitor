@@ -30,6 +30,10 @@
       (map-keys parse-int)
       (map-vals #(map parse-int %))))
 
+(defn coerce-contagem-matriculas [parsed-response]
+  (-> parsed-response
+      (map-kv parse-int)))
+
 (def discovery
   {:matriculas {:url "https://matricula.ufabc.edu.br/cache/matriculas.js"
                 :doc "Mapa com lista de disciplinas matrículadas para cada id de aluno"
@@ -37,7 +41,8 @@
                 :coerce-fn coerce-matriculas}
    :contagem-matriculas {:url "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
                          :doc "Mapa de número de requisições por disciplina"
-                         :eg-path "resources/contagem_matriculas_sample.txt"}
+                         :eg-path "resources/contagem_matriculas_sample.txt"
+                         :coerce-fn coerce-contagem-matriculas}
    :todas-disciplinas {:url "https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
                        :doc "Lista de informações das disciplinas"
                        :eg-path "resources/todas_disciplinas_sample.txt"}})
