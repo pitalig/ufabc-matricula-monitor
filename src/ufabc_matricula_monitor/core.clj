@@ -13,6 +13,9 @@
 (s/def ::body string?)
 (s/def ::status int?)
 
+(defn map-kv [m f]
+  (reduce-kv #(assoc %1 (f %2) (f %3)) {} m))
+
 (def discovery
   {:matriculas {:url "https://matricula.ufabc.edu.br/cache/matriculas.js"
                 :doc "Mapa com lista de disciplinas matrículadas para cada id de aluno"

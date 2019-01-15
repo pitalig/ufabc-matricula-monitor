@@ -8,6 +8,12 @@
 
 (stest/instrument)
 
+(deftest map-kv
+  (is (= (core/map-kv {"123" "456"} core/parse-int)
+         {123 456}))
+  (is (= (core/map-kv {123 456} str)
+         {"123" "456"})))
+
 (deftest secure-get!
   (with-redefs [http/get (constantly {:body "html" :status 200})]
     (is (let [{:keys [body status]} (core/secure-get! "https://www.google.com")]
