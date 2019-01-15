@@ -31,7 +31,7 @@
                          :eg-path "resources/contagem_matriculas_sample.txt"}
    :todas-disciplinas {:url "https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
                        :doc "Lista de informações das disciplinas"
-                       :eg "resources/todas_disciplinas_sample.txt"}})
+                       :eg-path "resources/todas_disciplinas_sample.txt"}})
 
 (defn alert-error! [exception]
   (slack/message "#random" (str "ERRO: \n" (.getMessage exception)))

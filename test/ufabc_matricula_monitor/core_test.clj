@@ -38,8 +38,8 @@
     (match?
       (m/embeds result)
       (core/parse-response {:body (slurp sample-path)}))
-    {"2034" ["8992" "8595" "8935"]} "resources/matriculas_sample.txt"
-    {"8682" "94"} "resources/contagem_matriculas_sample.txt"
-    [{"vagas" 45 "campus" 17 "id" 8994}] "resources/todas_disciplinas_sample.txt"))
+    {"2034" ["8992" "8595" "8935"]} "resources/matriculas_sample_small.txt"
+    {"8682" "94"} "resources/contagem_matriculas_sample_small.txt"
+    [{"vagas" 45 "campus" 17 "id" 8994}] "resources/todas_disciplinas_sample_small.txt"))
 
 (stest/unstrument)
