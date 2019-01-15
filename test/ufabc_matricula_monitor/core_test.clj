@@ -26,6 +26,18 @@
   (is (= {"123" "456"}
          (core/map-kv {123 456} str))))
 
+(defn gen-sample [sample-path]
+  {:body (slurp sample-path)})
+
+(def matriculas-sample (gen-sample "resources/matriculas_sample_small.txt"))
+(def contagem-matriculas-sample (gen-sample "resources/contagem_matriculas_sample_small.txt"))
+(def todas-disciplinas-sample (gen-sample "resources/todas_disciplinas_sample_small.txt"))
+
+(deftest coerce-matriculas
+  (is (= {2034 [8992 8595 8935]
+          526 [8662 9190]
+          4994 [8417 8448 8484 8595 8492]}
+         (core/coerce-matriculas (core/parse-response matriculas-sample)))))
 
 (deftest secure-get!
   (with-redefs [http/get (constantly {:body "html" :status 200})]
@@ -34,12 +46,12 @@
                (= 200 status))))))
 
 (deftest parse-response
-  (are [result sample-path]
+  (are [result sample]
     (match?
       (m/embeds result)
-      (core/parse-response {:body (slurp sample-path)}))
-    {"2034" ["8992" "8595" "8935"]} "resources/matriculas_sample_small.txt"
-    {"8682" "94"} "resources/contagem_matriculas_sample_small.txt"
-    [{"vagas" 45 "campus" 17 "id" 8994}] "resources/todas_disciplinas_sample_small.txt"))
+      (core/parse-response sample))
+    {"2034" ["8992" "8595" "8935"]} matriculas-sample
+    {"8682" "94"} contagem-matriculas-sample
+    [{"vagas" 45 "campus" 17 "id" 8994}] todas-disciplinas-sample))
 
 (stest/unstrument)

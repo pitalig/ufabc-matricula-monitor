@@ -22,10 +22,19 @@
 (defn map-kv [m f]
   (reduce-kv #(assoc %1 (f %2) (f %3)) {} m))
 
+(defn parse-int [s]
+  (Integer. (re-find #"\d+" s)))
+
+(defn coerce-matriculas [parsed-response]
+  (-> parsed-response
+      (map-keys parse-int)
+      (map-vals #(map parse-int %))))
+
 (def discovery
   {:matriculas {:url "https://matricula.ufabc.edu.br/cache/matriculas.js"
                 :doc "Mapa com lista de disciplinas matrículadas para cada id de aluno"
-                :eg-path "resources/matriculas_sample.txt"}
+                :eg-path "resources/matriculas_sample.txt"
+                :coerce-fn coerce-matriculas}
    :contagem-matriculas {:url "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
                          :doc "Mapa de número de requisições por disciplina"
                          :eg-path "resources/contagem_matriculas_sample.txt"}
@@ -83,9 +92,6 @@
 
 (defn id->disciplina [id]
   (first (filter #(= id (str (:id %))) @disciplinas)))
-
-(defn parse-int [s]
-  (Integer. (re-find #"\d+" s)))
 
 (def important-ids
   #{547 480 443 539 551 28 133 315 147})
