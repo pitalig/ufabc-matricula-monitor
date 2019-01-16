@@ -4,7 +4,8 @@
             [ufabc-matricula-monitor.core :as core]
             [matcher-combinators.test]
             [matcher-combinators.matchers :as m]
-            [clj-http.client :as http]))
+            [clj-http.client :as http]
+            [kaocha.repl :refer [run]]))
 
 (stest/instrument)
 
@@ -25,6 +26,12 @@
          (core/map-kv {"123" "456"} core/parse-int)))
   (is (= {"123" "456"}
          (core/map-kv {123 456} str))))
+
+(run
+  (deftest parse-int
+    (is (= 123 (core/parse-int "123")))
+    (is (= 123 (core/parse-int "aaa123")))
+    (is (= nil (core/parse-int "aaa")))))
 
 (defn gen-sample [sample-path]
   {:body (slurp sample-path)})

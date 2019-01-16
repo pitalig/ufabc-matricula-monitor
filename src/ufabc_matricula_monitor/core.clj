@@ -23,7 +23,9 @@
   (reduce-kv #(assoc %1 (f %2) (f %3)) {} m))
 
 (defn parse-int [s]
-  (Integer. (re-find #"\d+" s)))
+  (some->> s
+    (re-find #"\d+")
+    (Integer.)))
 
 (defn coerce-matriculas [parsed-response]
   (-> parsed-response
