@@ -101,7 +101,10 @@
   (first (filter #(= id (str (:id %))) @disciplinas)))
 
 (def important-ids
-  #{547 480 443 539 551 28 133 315 147})
+  #{9280 ; Resíduos Sólidos B-Noturno - 65 vagas
+    8422 ; Poluição Atmosférica A-Noturno - 2 vagas
+    9264 ; Transportes e Meio Ambiente B-Noturno - 30 vagas
+    })
 
 (defn alert! [disciplina open-slots]
   (let [msg (str (:nome disciplina) " tem " open-slots " vagas!")]
