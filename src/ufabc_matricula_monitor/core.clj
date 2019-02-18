@@ -101,9 +101,9 @@
   (first (filter #(= id (str (:id %))) @disciplinas)))
 
 (def important-ids
-  #{9280 ; Resíduos Sólidos B-Noturno - 65 vagas
-    8422 ; Poluição Atmosférica A-Noturno - 2 vagas
-    9264 ; Transportes e Meio Ambiente B-Noturno - 30 vagas
+  #{8731 ; Engenharia Laboral
+    8749 ; Estatística Aplicada a Sistemas de Gestão
+    9037 ; Estratégias de Comunicação Organizacional
     })
 
 (defn alert! [disciplina open-slots]
