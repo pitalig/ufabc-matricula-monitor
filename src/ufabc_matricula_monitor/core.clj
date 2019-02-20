@@ -104,6 +104,9 @@
   #{8731 ; Engenharia Laboral
     8749 ; Estatística Aplicada a Sistemas de Gestão
     9037 ; Estratégias de Comunicação Organizacional
+    8717 ; Modelos de Decisão Multicritério
+    8526 ; Introdução aos Processos de Fabricação Metal - Mecânico
+    8532 ; Introdução aos Processos de Fabricação Metal - Mecânico
     })
 
 (defn alert! [disciplina open-slots]
