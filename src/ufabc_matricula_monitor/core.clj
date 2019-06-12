@@ -101,12 +101,7 @@
   (first (filter #(= id (str (:id %))) @disciplinas)))
 
 (def important-ids
-  #{8731 ; Engenharia Laboral
-    8749 ; Estatística Aplicada a Sistemas de Gestão
-    9037 ; Estratégias de Comunicação Organizacional
-    8717 ; Modelos de Decisão Multicritério
-    8526 ; Introdução aos Processos de Fabricação Metal - Mecânico
-    8532 ; Introdução aos Processos de Fabricação Metal - Mecânico
+  #{648 ; Laboratório de Física I A-Noturno (Santo André)
     })
 
 (defn alert! [disciplina open-slots]
