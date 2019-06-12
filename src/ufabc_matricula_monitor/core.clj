@@ -120,8 +120,8 @@
   (let [disciplina (id->disciplina id)
         open-slots (- (:vagas disciplina) (parse-int req))]
     (when (and (> open-slots 0)
-               (= (:nome_campus disciplina) "Campus Santo André")
-               (re-find #"Noturno" (:nome disciplina)))
+               #_(= (:nome_campus disciplina) "Campus Santo André")
+               #_(re-find #"Noturno" (:nome disciplina)))
       (alert! disciplina open-slots))))
 
 (defn get-updates [old new]
