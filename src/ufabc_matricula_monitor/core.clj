@@ -107,6 +107,7 @@
     301 ; Pesquisa Operacional A noturno
     370 ; Modelos e Ferramentas de Gestão Ambiental A noturno
     417 ; Inovação Estratégica A noturno
+    279 ; Estratégias de Comunicação Organizacional A-Matutino
     })
 
 (defn alert! [disciplina open-slots]
