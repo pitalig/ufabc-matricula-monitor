@@ -2,14 +2,14 @@
   :description "App for monitoring UFABC enrollment"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.9.0"]
-                 [clj-http "3.9.1"]
+  :dependencies [[org.clojure/clojure "1.10.1"]
+                 [clj-http "3.10.0"]
                  [cheshire "5.8.1"]
-                 [org.julienxx/clj-slack "0.5.6"]
-                 [nubank/matcher-combinators "0.4.2"]
-                 [lambdaisland/kaocha "0.0-343"]]
+                 [org.julienxx/clj-slack "0.6.3"]
+                 [nubank/matcher-combinators "1.0.0"]]
   :main ^:skip-aot ufabc-matricula-monitor.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}
-             :kaocha {:dependencies [[lambdaisland/kaocha "0.0-343"]]}}
-  :aliases {"kaocha" ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]})
+             :kaocha {:dependencies [[lambdaisland/kaocha "0.0-521"]]}}
+  :aliases {"kaocha" ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]
+            "test" ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]})
