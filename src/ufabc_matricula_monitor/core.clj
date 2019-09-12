@@ -101,13 +101,7 @@
   (first (filter #(= id (str (:id %))) @disciplinas)))
 
 (def important-ids
-  #{648 ; Laboratório de Física I A-Noturno (Santo André)
-    20 ; Sistemas CAD/CAE A1 noturno
-    402 ; Sistemas de Informação Corporativos A noturno
-    301 ; Pesquisa Operacional A noturno
-    370 ; Modelos e Ferramentas de Gestão Ambiental A noturno
-    417 ; Inovação Estratégica A noturno
-    279 ; Estratégias de Comunicação Organizacional A-Matutino
+  #{721 ; Sistemas Inteligentes
     })
 
 (defn alert! [disciplina open-slots]
