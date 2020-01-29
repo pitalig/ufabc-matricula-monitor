@@ -68,7 +68,7 @@
   [url & {:keys [max-retries base-interval-sec]
           :or {max-retries 5, base-interval-sec 5}}]
   (loop [t 0]
-    (let [result (try (http/get url)
+    (let [result (try (http/get url {:insecure? true})
                       (catch Exception e
                         (if (< max-retries t)
                           (throw e)
