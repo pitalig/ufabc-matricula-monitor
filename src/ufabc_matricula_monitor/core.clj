@@ -138,9 +138,16 @@
              (println "Nothing changed")
              (do (println "Changes!")
                  (verify-and-alert! contagem updated-contagem)))
-           (Thread/sleep 15000)
+           (Thread/sleep 10000)
            (recur updated-contagem)))
-       (catch Exception ex (do (println (ex-data ex)) (slack/message "#general" (str ":fire: :fire: :fire: :fire: \n" (ex-data ex)))))))
+       (catch Exception ex (do (println {:exception/data (ex-data ex)
+                                         :exception/message (ex-message ex)
+                                         :exception/cause (ex-cause ex)})
+                               (slack/message "#random"
+                                              (str ":fire: :fire: :fire: :fire: \n"
+                                                   {:exception/data (ex-data ex)
+                                                    :exception/message (ex-message ex)
+                                                    :exception/cause (ex-cause ex)}))))))
 
 (defn -main
   [& args]
