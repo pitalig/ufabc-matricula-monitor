@@ -101,7 +101,12 @@
   (first (filter #(= id (str (:id %))) @disciplinas)))
 
 (def important-ids
-  #{721 ; Sistemas Inteligentes
+  #{670 ; Fenômenos de Transporte A-noturno (Santo André)
+    809 ; Materiais e Suas Propriedades A1-noturno (Santo André)
+    679 ; Fenômenos de Transporte B1-noturno (São Bernardo)
+    931 ; Habitação e Assentamentos Humanos A-noturno (Santo André)
+    425 ; Ecologia do Ambiente Urbano A-noturno (Santo André)
+    440 ; Compostagem A-noturno (Santo André)
     })
 
 (defn alert! [disciplina open-slots]
