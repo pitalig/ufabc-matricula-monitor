@@ -36,7 +36,7 @@
   (-> parsed-response
       (map-kv parse-int)))
 
-(def discovery
+(def bookmark-settings
   {:matriculas {:url "https://matricula.ufabc.edu.br/cache/matriculas.js"
                 :doc "Mapa com lista de disciplinas matrículadas para cada id de aluno"
                 :eg-path "resources/matriculas_sample.txt"
@@ -79,8 +79,8 @@
           (Thread/sleep (* t t base-interval-sec 1000))
           (recur (inc t)))))))
 
-(defn secure-get-endpoint! [endpoint]
-  (-> discovery endpoint :url secure-get!))
+(defn bookmarks->url [endpoint bookmarks]
+  (-> bookmarks endpoint :url))
 
 (s/fdef parse-response
   :args (s/cat :raw-response (s/keys :req-un [::body])))
@@ -91,7 +91,9 @@
       json/parse-string))
 
 (def disciplinas
-  (delay (-> (secure-get-endpoint! :todas-disciplinas)
+  (delay (-> :todas-disciplinas
+             (bookmarks->url bookmark-settings)
+             secure-get!
              :body
              (replace-first #"todasDisciplinas=" "")
              (replace-first #"\n" "")
@@ -132,8 +134,14 @@
 
 (defn start! []
   (slack/message "#random" "Starting!")
-  (try (loop [contagem (parse-response (secure-get-endpoint! :contagem-matriculas))]
-         (let [updated-contagem (parse-response (secure-get-endpoint! :contagem-matriculas))]
+  (try (loop [contagem (-> :contagem-matriculas
+                           (bookmarks->url bookmark-settings)
+                           secure-get!
+                           parse-response)]
+         (let [updated-contagem (-> :contagem-matriculas
+                                    (bookmarks->url bookmark-settings)
+                                    secure-get!
+                                    parse-response)]
            (if (= contagem updated-contagem)
              (println "Nothing changed")
              (do (println "Changes!")
