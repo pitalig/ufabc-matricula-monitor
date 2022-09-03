@@ -24,8 +24,8 @@
 
 (defn parse-int [s]
   (some->> s
-    (re-find #"\d+")
-    (Integer.)))
+           (re-find #"\d+")
+           (Integer.)))
 
 (defn coerce-matriculas [parsed-response]
   (-> parsed-response
@@ -52,11 +52,11 @@
 (defn alert-error! [exception]
   (slack/message "#random" (str "ERRO: \n" (.getMessage exception)))
   (println (str "Raw error:\n"
-             exception
-             "\nError message:\n"
-             (.getMessage exception)
-             "\nError data:\n"
-             (ex-data exception))))
+                exception
+                "\nError message:\n"
+                (.getMessage exception)
+                "\nError data:\n"
+                (ex-data exception))))
 
 (s/fdef http-get!
   :args (s/cat :url ::url
@@ -134,8 +134,8 @@
 
 (defn log-exception! [ex]
   (println {:exception/data (ex-data ex)
-               :exception/message (ex-message ex)
-               :exception/cause (ex-cause ex)})
+            :exception/message (ex-message ex)
+            :exception/cause (ex-cause ex)})
   (slack/message "#random"
                  (str ":fire: :fire: :fire: :fire: \n"
                       {:exception/data (ex-data ex)
