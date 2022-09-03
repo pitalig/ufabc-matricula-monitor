@@ -39,15 +39,15 @@
 (def bookmark-settings
   {:matriculas {:url "https://matricula.ufabc.edu.br/cache/matriculas.js"
                 :doc "Mapa com lista de disciplinas matrículadas para cada id de aluno"
-                :eg-path "resources/matriculas_sample.txt"
+                :sample-path "resources/matriculas_sample.txt"
                 :coerce-fn coerce-matriculas}
    :contagem-matriculas {:url "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
                          :doc "Mapa de número de requisições por disciplina"
-                         :eg-path "resources/contagem_matriculas_sample.txt"
+                         :sample-path "resources/contagem_matriculas_sample.txt"
                          :coerce-fn coerce-contagem-matriculas}
    :todas-disciplinas {:url "https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
                        :doc "Lista de informações das disciplinas"
-                       :eg-path "resources/todas_disciplinas_sample.txt"}})
+                       :sample-path "resources/todas_disciplinas_sample.txt"}})
 
 (defn alert-error! [exception]
   (slack/message "#random" (str "ERRO: \n" (.getMessage exception)))
@@ -58,13 +58,13 @@
              "\nError data:\n"
              (ex-data exception))))
 
-(s/fdef secure-get!
+(s/fdef http-get!
   :args (s/cat :url ::url
                :kwargs (s/keys* :req-un [::max-retries ::base-interval-sec]))
   :ret (s/keys :opt [::body ::status]))
-(defn secure-get!
+(defn http-get!
   "Send a http get to an url.
-   If it fails, will retry `max-retries` times with an exponential sleep betwen retries."
+   If it fails, will retry `max-retries` times with an incremental sleep between retries."
   [url & {:keys [max-retries base-interval-sec]
           :or {max-retries 5, base-interval-sec 5}}]
   (loop [t 0]
@@ -76,7 +76,7 @@
       (or
         result
         (do
-          (Thread/sleep (* t t base-interval-sec 1000))
+          (Thread/sleep (* t base-interval-sec 1000))
           (recur (inc t)))))))
 
 (defn bookmarks->url [endpoint bookmarks]
@@ -93,7 +93,7 @@
 (def disciplinas
   (delay (-> :todas-disciplinas
              (bookmarks->url bookmark-settings)
-             secure-get!
+             http-get!
              :body
              (replace-first #"todasDisciplinas=" "")
              (replace-first #"\n" "")
@@ -132,15 +132,25 @@
 (defn verify-and-alert! [old new]
   (doseq [cont (get-updates old new)] (alert-when-open-slots! cont)))
 
+(defn log-exception! [ex]
+  (println {:exception/data (ex-data ex)
+               :exception/message (ex-message ex)
+               :exception/cause (ex-cause ex)})
+  (slack/message "#random"
+                 (str ":fire: :fire: :fire: :fire: \n"
+                      {:exception/data (ex-data ex)
+                       :exception/message (ex-message ex)
+                       :exception/cause (ex-cause ex)})))
+
 (defn start! []
   (slack/message "#random" "Starting!")
   (try (loop [contagem (-> :contagem-matriculas
                            (bookmarks->url bookmark-settings)
-                           secure-get!
+                           http-get!
                            parse-response)]
          (let [updated-contagem (-> :contagem-matriculas
                                     (bookmarks->url bookmark-settings)
-                                    secure-get!
+                                    http-get!
                                     parse-response)]
            (if (= contagem updated-contagem)
              (println "Nothing changed")
@@ -148,14 +158,7 @@
                  (verify-and-alert! contagem updated-contagem)))
            (Thread/sleep 10000)
            (recur updated-contagem)))
-       (catch Exception ex (do (println {:exception/data (ex-data ex)
-                                         :exception/message (ex-message ex)
-                                         :exception/cause (ex-cause ex)})
-                               (slack/message "#random"
-                                              (str ":fire: :fire: :fire: :fire: \n"
-                                                   {:exception/data (ex-data ex)
-                                                    :exception/message (ex-message ex)
-                                                    :exception/cause (ex-cause ex)}))))))
+       (catch Exception ex (log-exception! ex))))
 
 (defn -main
   [& args]
