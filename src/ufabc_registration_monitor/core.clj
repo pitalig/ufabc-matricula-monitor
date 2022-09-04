@@ -91,7 +91,9 @@
       (json/parse-string)))
 
 (defn id->course [id courses]
-  (first (filter #(= id (str (:id %))) courses)))
+  (first (filter #(= id (str (:id %))) courses))
+  ; TODO: Throw when not found
+  )
 
 (def monitored-ids
   #{670 ; Fenômenos de Transporte A-noturno (Santo André)
@@ -102,25 +104,28 @@
     440 ; Compostagem A-noturno (Santo André)
     })
 
-(defn alert! [course open-slots]
-  (let [msg (str (:nome course) " tem " open-slots " vagas!")]
-    (println msg)
-    (slack/message! "#random" msg)
-    (when (monitored-ids (:id course))
-      (slack/message! "#general" msg))))
+(defn log! [data]
+  (println data)
+  data)
 
-(defn alert-when-open-slots! [[id req] courses]
-  (let [course (id->course id courses)
-        open-slots (- (:vagas course) (parse-int req))]
-    (when (> open-slots 0)
-      (alert! course open-slots))))
+(defn alert-for-open-slots [course-id registration-count courses]
+  (let [course (id->course course-id courses)
+        open-slots (- (:vagas course) (parse-int registration-count))
+        message (str (:nome course) " has " open-slots " slots!")]
+    (cond
+      (<= open-slots 0) nil
+      (monitored-ids (:id course)) {:channel "#general" :text message}
+      :else {:channel "#random" :text message})))
 
 (defn get-updates [old new]
   (second (diff old new)))
 
 (defn verify-and-alert! [old-registrations new-registrations courses]
-  (doseq [registration (get-updates old-registrations new-registrations)]
-    (alert-when-open-slots! registration courses)))
+  (println "Changes!")
+  (doseq [[course-id registration-count] (get-updates old-registrations new-registrations)]
+    (some-> (alert-for-open-slots course-id registration-count courses)
+            log!
+            slack/message!)))
 
 (defn log-exception! [ex]
   (println {:exception/data (ex-data ex)
@@ -128,9 +133,9 @@
             :exception/cause (ex-cause ex)})
   (slack/message! "#random"
                   (str ":fire: :fire: :fire: :fire: \n"
-                      "data: " (ex-data ex) "\n"
-                      "message: " (ex-message ex) "\n"
-                      "cause: " (ex-cause ex) "\n")))
+                       "data: " (ex-data ex) "\n"
+                       "message: " (ex-message ex) "\n"
+                       "cause: " (ex-cause ex) "\n")))
 
 (defn start! []
   (slack/message! "#random" "Starting!")
@@ -147,11 +152,10 @@
                                 (bookmarks->url bookmark-settings)
                                 http-get!
                                 parse-response)]
-          (if (or (empty? count)
-                  (= count updated-count))
+          (if (or #_(empty? count)
+                (= count updated-count))
             (println "Nothing changed")
-            (do (println "Changes!")
-                (verify-and-alert! count updated-count courses)))
+            (verify-and-alert! count updated-count courses))
           (Thread/sleep 10000)
           (recur updated-count))))
     (catch Exception ex (log-exception! ex))))
