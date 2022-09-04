@@ -15,7 +15,7 @@
 (s/def ::status int?)
 
 (defn id->course [id courses]
-  (first (filter #(= id (str (:id %))) courses))
+  (first (filter #(= id (:id %)) courses))
   ; TODO: Throw when not found
   )
 
@@ -30,8 +30,8 @@
 
 (defn alert-for-open-slots [course-id registration-count courses]
   (let [course (id->course course-id courses)
-        open-slots (- (:vagas course) (utils/parse-int registration-count))
-        message (str (:nome course) " has " open-slots " slots!")]
+        open-slots (- (:slots course) registration-count)
+        message (str (:name course) " has " open-slots " slots!")]
     (cond
       (<= open-slots 0) nil
       (monitored-ids (:id course)) {:channel "#general" :text message}
@@ -42,7 +42,8 @@
 
 (defn verify-and-alert! [old-registrations new-registrations courses]
   (println "Changes!")
-  (doseq [[course-id registration-count] (get-updates old-registrations new-registrations)]
+  ; TODO Remove this (first), it's just a test
+  (doseq [[course-id registration-count] [(first (get-updates old-registrations new-registrations))]]
     (some-> (alert-for-open-slots course-id registration-count courses)
             utils/log!
             slack/message!)))
@@ -50,23 +51,13 @@
 (defn start! []
   (slack/message! "#random" "Starting!")
   (try
-    (let [courses (-> :courses
-                      (http/bookmarks->url http/bookmark-settings)
-                      http/http-get! ;; TODO: Make a get fn that just receive the bookmark key
-                      :body
-                      (string/replace-first #"todasDisciplinas=" "") ;; TODO: Use parse response here
-                      (string/replace-first #"\n" "")
-                      (json/parse-string true))]
-      (loop [count {}]
-        (let [updated-count (-> :registrations-count
-                                (http/bookmarks->url http/bookmark-settings)
-                                http/http-get!
-                                http/parse-response)]
-          (if (or #_(empty? count)
-                (= count updated-count))
+    (let [courses (http/get-bookmark! :courses http/bookmark-settings)]
+      (loop [count {} #_(http/get-bookmark! :registrations-count http/bookmark-settings)]
+        (Thread/sleep 2000) ; Todo increase sleep
+        (let [updated-count (http/get-bookmark! :registrations-count http/bookmark-settings)]
+          (if (= count updated-count)
             (println "Nothing changed")
             (verify-and-alert! count updated-count courses))
-          (Thread/sleep 10000)
           (recur updated-count))))
     (catch Exception ex (do (utils/log-exception! ex)
                             (slack/log-exception! ex)))))
