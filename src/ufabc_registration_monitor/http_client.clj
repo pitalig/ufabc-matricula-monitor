@@ -32,10 +32,6 @@
              :coerce-fn coerce-courses
              :json-coerce-key-fn true}})
 
-(s/fdef get!
-  :args (s/cat :url ::url
-               :kwargs (s/keys* :req-un [::max-retries ::base-interval-sec]))
-  :ret (s/keys :opt [::body ::status]))
 (defn get!
   "Send a http get to an url.
    If it fails, will retry `max-retries` times with an incremental sleep between retries."
@@ -53,8 +49,6 @@
           (sleep-fn! (* t base-interval-sec 1000))
           (recur (inc t)))))))
 
-(s/fdef parse-response
-  :args (s/cat :raw-response (s/keys :req-un [::body])))
 (defn parse-response [raw-response coerce-fn json-coerce-key-fn]
   (-> raw-response
       :body

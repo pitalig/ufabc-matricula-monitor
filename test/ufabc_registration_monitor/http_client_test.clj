@@ -3,10 +3,7 @@
             [ufabc-registration-monitor.http-client :as http]
             [matcher-combinators.test :refer [match?]]
             [clj-http.client]
-            [clojure.spec.test.alpha :as stest]
             [matcher-combinators.matchers :as m]))
-
-(stest/instrument)
 
 (deftest coerce-registrations-count
   (is (match? (m/equals {8290 77
@@ -59,5 +56,3 @@
         (let [{:keys [small-sample coerce-fn json-coerce-key-fn]} (:courses http/bookmark-settings)]
           (http/parse-response small-sample coerce-fn json-coerce-key-fn)))
       "Can parse all courses"))
-
-(stest/unstrument)

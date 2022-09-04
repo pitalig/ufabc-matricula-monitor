@@ -1,11 +1,8 @@
 (ns ufabc-registration-monitor.core-test
   (:require [clojure.test :refer :all]
-            [clojure.spec.test.alpha :as stest]
             [ufabc-registration-monitor.core :as core]
             [matcher-combinators.test :refer [match?]]
             [matcher-combinators.matchers :as m]))
-
-(stest/instrument)
 
 (deftest get-updates-test
   (is (match? (m/equals {:b 3 :c 3}) (core/get-updates {:a 1 :b 2} {:a 1 :b 3 :c 3}))
@@ -33,5 +30,3 @@
   (is (match? (m/equals {:channel "#general", :text "Algorithms has 1 slots!"})
         (core/alert-for-open-slots 2 10 [{:id 2 :name "Algorithms" :slots 11}] #{2}))
       "When there are open slots and the course is monitored, so return an alert to random and another to general"))
-
-(stest/unstrument)

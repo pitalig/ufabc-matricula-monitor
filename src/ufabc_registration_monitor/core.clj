@@ -5,14 +5,7 @@
             [ufabc-registration-monitor.http-client :as http]
             [clj-slack.chat]
             [clojure.data :refer [diff]]
-            [clojure.spec.alpha :as s]
             [clj-http.client]))
-
-(s/def ::url string?)
-(s/def ::max-retries int?)
-(s/def ::base-interval-sec int?)
-(s/def ::body string?)
-(s/def ::status int?)
 
 (defn alert-for-open-slots [course-id registration-count courses monitored-ids]
   (let [course (first (filter #(= course-id (:id %)) courses))
