@@ -50,7 +50,7 @@
              :sample-path "resources/courses_sample.txt"}})
 
 (defn alert-error! [exception]
-  (slack/message "#random" (str "ERROR: \n" (.getMessage exception)))
+  (slack/message! "#random" (str "ERROR: \n" (.getMessage exception)))
   (println (str "Raw error:\n"
                 exception
                 "\nError message:\n"
@@ -88,19 +88,10 @@
   (-> raw-response
       :body
       (replace-first #".*=" "")
-      json/parse-string))
+      (json/parse-string)))
 
-(def courses
-  (delay (-> :courses
-             (bookmarks->url bookmark-settings)
-             http-get!
-             :body
-             (replace-first #"todasDisciplinas=" "")
-             (replace-first #"\n" "")
-             (json/parse-string true))))
-
-(defn id->course [id]
-  (first (filter #(= id (str (:id %))) @courses)))
+(defn id->course [id courses]
+  (first (filter #(= id (str (:id %))) courses)))
 
 (def monitored-ids
   #{670 ; Fenômenos de Transporte A-noturno (Santo André)
@@ -114,12 +105,12 @@
 (defn alert! [course open-slots]
   (let [msg (str (:nome course) " tem " open-slots " vagas!")]
     (println msg)
-    (slack/message "#random" msg)
+    (slack/message! "#random" msg)
     (when (monitored-ids (:id course))
-      (slack/message "#general" msg))))
+      (slack/message! "#general" msg))))
 
-(defn alert-when-open-slots! [[id req]]
-  (let [course (id->course id)
+(defn alert-when-open-slots! [[id req] courses]
+  (let [course (id->course id courses)
         open-slots (- (:vagas course) (parse-int req))]
     (when (> open-slots 0)
       (alert! course open-slots))))
@@ -127,36 +118,43 @@
 (defn get-updates [old new]
   (second (diff old new)))
 
-(defn verify-and-alert! [old new]
-  (doseq [cont (get-updates old new)] (alert-when-open-slots! cont)))
+(defn verify-and-alert! [old-registrations new-registrations courses]
+  (doseq [registration (get-updates old-registrations new-registrations)]
+    (alert-when-open-slots! registration courses)))
 
 (defn log-exception! [ex]
   (println {:exception/data (ex-data ex)
             :exception/message (ex-message ex)
             :exception/cause (ex-cause ex)})
-  (slack/message "#random"
-                 (str ":fire: :fire: :fire: :fire: \n"
-                      {:exception/data (ex-data ex)
-                       :exception/message (ex-message ex)
-                       :exception/cause (ex-cause ex)})))
+  (slack/message! "#random"
+                  (str ":fire: :fire: :fire: :fire: \n"
+                      "data: " (ex-data ex) "\n"
+                      "message: " (ex-message ex) "\n"
+                      "cause: " (ex-cause ex) "\n")))
 
 (defn start! []
-  (slack/message "#random" "Starting!")
-  (try (loop [count (-> :registrations-count
-                        (bookmarks->url bookmark-settings)
-                        http-get!
-                        parse-response)]
-         (let [updated-count (-> :registrations-count
-                                 (bookmarks->url bookmark-settings)
-                                 http-get!
-                                 parse-response)]
-           (if (= count updated-count)
-             (println "Nothing changed")
-             (do (println "Changes!")
-                 (verify-and-alert! count updated-count)))
-           (Thread/sleep 10000)
-           (recur updated-count)))
-       (catch Exception ex (log-exception! ex))))
+  (slack/message! "#random" "Starting!")
+  (try
+    (let [courses (-> :courses
+                      (bookmarks->url bookmark-settings)
+                      http-get! ;; TODO: Make a get fn that just receive the bookmark key
+                      :body
+                      (replace-first #"todasDisciplinas=" "") ;; TODO: Use parse response here
+                      (replace-first #"\n" "")
+                      (json/parse-string true))]
+      (loop [count {}]
+        (let [updated-count (-> :registrations-count
+                                (bookmarks->url bookmark-settings)
+                                http-get!
+                                parse-response)]
+          (if (or (empty? count)
+                  (= count updated-count))
+            (println "Nothing changed")
+            (do (println "Changes!")
+                (verify-and-alert! count updated-count courses)))
+          (Thread/sleep 10000)
+          (recur updated-count))))
+    (catch Exception ex (log-exception! ex))))
 
 (defn -main
   [& args]

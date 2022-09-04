@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.spec.test.alpha :as stest]
             [ufabc-registration-monitor.core :as core]
-            [matcher-combinators.test]
+            [matcher-combinators.test :refer [match?]]
             [matcher-combinators.matchers :as m]
             [clj-http.client :as http]))
 
@@ -83,5 +83,13 @@
                           "codigo" "ESTS016-17"}])
               (core/parse-response courses-sample))
       "Can parse all courses"))
+
+(deftest get-updates-test
+  (is (match? (m/equals {:b 3 :c 3}) (core/get-updates {:a 1 :b 2} {:a 1 :b 3 :c 3}))
+      "Returns a map with new or updated keyvals")
+  (is (nil? (core/get-updates {:a 1} {:a 1}))
+      "Returns nil when there are no changes")
+  (is (nil? (core/get-updates {:a 1} {}))
+      "Removed keyvals are not considered updates"))
 
 (stest/unstrument)
