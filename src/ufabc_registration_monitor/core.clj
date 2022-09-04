@@ -3,8 +3,10 @@
   (:require [ufabc-registration-monitor.slack :as slack]
             [ufabc-registration-monitor.utils :as utils]
             [ufabc-registration-monitor.http-client :as http]
+            [clj-slack.chat]
             [clojure.data :refer [diff]]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            [clj-http.client]))
 
 (s/def ::url string?)
 (s/def ::max-retries int?)
@@ -22,16 +24,18 @@
 (defn get-updates [old new]
   (second (diff old new)))
 
-(defn alert-open-slots! [old-registrations new-registrations courses monitored-ids]
+(defn alert-open-slots!
+  [old-registrations new-registrations courses monitored-ids
+   {:keys [log-fn! slack-post-message-fn!]}]
   (println "Changes!")
   ; TODO Remove this (first), it's just to reduce noise while testing
   (doseq [[course-id registration-count] [(first (get-updates old-registrations new-registrations))]]
     (some-> (alert-for-open-slots course-id registration-count courses monitored-ids)
-            utils/log!
-            slack/message!)))
+            (utils/log! log-fn!)
+            (slack/message! slack-post-message-fn!))))
 
-(defn start! []
-  (slack/message! "#random" "Starting!")
+(defn start! [{:keys [log-fn! http-get-fn! slack-post-message-fn!] :as effects}]
+  (slack/message! "#random" "Starting!" slack-post-message-fn!)
   (try
     (let [monitored-ids #{670 ; Fenômenos de Transporte A-noturno (Santo André)
                           809 ; Materiais e Suas Propriedades A1-noturno (Santo André)
@@ -40,18 +44,20 @@
                           425 ; Ecologia do Ambiente Urbano A-noturno (Santo André)
                           440 ; Compostagem A-noturno (Santo André)
                           }
-          courses (http/get-bookmark! :courses http/bookmark-settings)]
+          courses (http/get-bookmark! :courses http/bookmark-settings http-get-fn!)]
       (loop [count {} #_(http/get-bookmark! :registrations-count http/bookmark-settings)]
         (Thread/sleep 2000) ; Todo increase sleep
-        (let [updated-count (http/get-bookmark! :registrations-count http/bookmark-settings)]
+        (let [updated-count (http/get-bookmark! :registrations-count http/bookmark-settings http-get-fn!)]
           (if (= count updated-count)
-            (println "Nothing changed")
-            (alert-open-slots! count updated-count courses monitored-ids))
+            (log-fn! "Nothing changed")
+            (alert-open-slots! count updated-count courses monitored-ids effects))
           (recur updated-count))))
-    (catch Exception ex (do (utils/log-exception! ex)
-                            (slack/log-exception! ex)))))
+    (catch Exception ex (do (utils/log-exception! ex log-fn!)
+                            (slack/log-exception! ex slack-post-message-fn!)))))
 
 (defn -main
   [& args]
   (println "Starting...")
-  (start!))
+  (start! {:http-get-fn! clj-http.client/get
+           :slack-post-message-fn! clj-slack.chat/post-message
+           :log-fn! println}))

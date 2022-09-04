@@ -1,7 +1,6 @@
 (ns ufabc-registration-monitor.http-client
   (:require [cheshire.core :as json]
             [clojure.spec.alpha :as s]
-            [clj-http.client]
             [ufabc-registration-monitor.utils :as utils]
             [clojure.string :as string]))
 
@@ -40,10 +39,10 @@
 (defn get!
   "Send a http get to an url.
    If it fails, will retry `max-retries` times with an incremental sleep between retries."
-  [url & {:keys [max-retries base-interval-sec]
-          :or {max-retries 5, base-interval-sec 5}}]
+  [url http-get-fn! & {:keys [max-retries base-interval-sec]
+                       :or {max-retries 5, base-interval-sec 5}}]
   (loop [t 0]
-    (let [result (try (clj-http.client/get url {:insecure? true})
+    (let [result (try (http-get-fn! url {:insecure? true})
                       (catch Exception e
                         (if (< max-retries t)
                           (throw e)
@@ -64,7 +63,7 @@
       (json/parse-string json-coerce-key-fn)
       coerce-fn))
 
-(defn get-bookmark! [bookmark-key bookmarks]
+(defn get-bookmark! [bookmark-key bookmarks http-get-fn!]
   (let [{:keys [url coerce-fn json-coerce-key-fn]} (get bookmarks bookmark-key)]
-    (-> (get! url)
+    (-> (get! url http-get-fn!)
         (parse-response coerce-fn json-coerce-key-fn))))

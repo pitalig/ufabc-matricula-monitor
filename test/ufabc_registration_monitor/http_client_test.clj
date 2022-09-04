@@ -41,10 +41,9 @@
                                :vagas 86}]))))
 
 (deftest get!
-  (with-redefs [clj-http.client/get (constantly {:body "html" :status 200})]
-    (is (let [{:keys [body status]} (http/get! "https://www.google.com")]
-          (and (string? body)
-               (= 200 status))))))
+  (is (let [{:keys [body status]} (http/get! "https://www.google.com" (constantly {:body "html" :status 200}))]
+        (and (string? body)
+             (= 200 status)))))
 
 (deftest parse-response
   (is (match? (m/equals {8682 94
