@@ -34,7 +34,7 @@
             (utils/log! log-fn!)
             (slack/message! slack-post-message-fn!))))
 
-(defn start! [{:keys [log-fn! http-get-fn! slack-post-message-fn!] :as effects}]
+(defn start! [{:keys [log-fn! http-get-fn! slack-post-message-fn! sleep-fn!] :as effects}]
   (slack/message! "#random" "Starting!" slack-post-message-fn!)
   (try
     (let [monitored-ids #{670 ; Fenômenos de Transporte A-noturno (Santo André)
@@ -44,10 +44,10 @@
                           425 ; Ecologia do Ambiente Urbano A-noturno (Santo André)
                           440 ; Compostagem A-noturno (Santo André)
                           }
-          courses (http/get-bookmark! :courses http/bookmark-settings http-get-fn!)]
-      (loop [count {} #_(http/get-bookmark! :registrations-count http/bookmark-settings)]
-        (Thread/sleep 2000) ; Todo increase sleep
-        (let [updated-count (http/get-bookmark! :registrations-count http/bookmark-settings http-get-fn!)]
+          courses (http/get-bookmark! :courses http/bookmark-settings effects)]
+      (loop [count {} #_(http/get-bookmark! :registrations-count http/bookmark-settings effects)]
+        (sleep-fn! 2000) ; Todo increase sleep
+        (let [updated-count (http/get-bookmark! :registrations-count http/bookmark-settings effects)]
           (if (= count updated-count)
             (log-fn! "Nothing changed")
             (alert-open-slots! count updated-count courses monitored-ids effects))
@@ -60,4 +60,5 @@
   (println "Starting...")
   (start! {:http-get-fn! clj-http.client/get
            :slack-post-message-fn! clj-slack.chat/post-message
-           :log-fn! println}))
+           :log-fn! println
+           :sleep-fn! (fn [milis] (println (str "Sleep " milis)) #_(Thread/sleep milis))}))

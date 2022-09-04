@@ -41,7 +41,9 @@
                                :vagas 86}]))))
 
 (deftest get!
-  (is (let [{:keys [body status]} (http/get! "https://www.google.com" (constantly {:body "html" :status 200}))]
+  (is (let [effects {:http-get-fn! (constantly {:body "html" :status 200})
+                     :sleep-fn! identity}
+            {:keys [body status]} (http/get! "https://www.google.com" effects)]
         (and (string? body)
              (= 200 status)))))
 

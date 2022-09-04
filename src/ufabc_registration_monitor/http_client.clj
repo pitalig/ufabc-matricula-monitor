@@ -39,7 +39,7 @@
 (defn get!
   "Send a http get to an url.
    If it fails, will retry `max-retries` times with an incremental sleep between retries."
-  [url http-get-fn! & {:keys [max-retries base-interval-sec]
+  [url {:keys [http-get-fn! sleep-fn!]} & {:keys [max-retries base-interval-sec]
                        :or {max-retries 5, base-interval-sec 5}}]
   (loop [t 0]
     (let [result (try (http-get-fn! url {:insecure? true})
@@ -50,7 +50,7 @@
       (or
         result
         (do
-          (Thread/sleep (* t base-interval-sec 1000))
+          (sleep-fn! (* t base-interval-sec 1000))
           (recur (inc t)))))))
 
 (s/fdef parse-response
@@ -63,7 +63,7 @@
       (json/parse-string json-coerce-key-fn)
       coerce-fn))
 
-(defn get-bookmark! [bookmark-key bookmarks http-get-fn!]
+(defn get-bookmark! [bookmark-key bookmarks effects]
   (let [{:keys [url coerce-fn json-coerce-key-fn]} (get bookmarks bookmark-key)]
-    (-> (get! url http-get-fn!)
+    (-> (get! url effects)
         (parse-response coerce-fn json-coerce-key-fn))))
