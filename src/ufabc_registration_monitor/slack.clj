@@ -1,4 +1,4 @@
-(ns ufabc-matricula-monitor.slack
+(ns ufabc-registration-monitor.slack
   (:require [clj-slack.chat :as chat]))
 
 (def connection {:api-url "https://slack.com/api"

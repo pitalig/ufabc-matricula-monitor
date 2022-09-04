@@ -1,6 +1,6 @@
-(ns ufabc-matricula-monitor.core
+(ns ufabc-registration-monitor.core
   (:gen-class)
-  (:require [ufabc-matricula-monitor.slack :as slack]
+  (:require [ufabc-registration-monitor.slack :as slack]
             [clj-http.client :as http]
             [cheshire.core :as json]
             [clojure.string :refer (replace-first)]
@@ -27,30 +27,30 @@
            (re-find #"\d+")
            (Integer.)))
 
-(defn coerce-matriculas [parsed-response]
+(defn coerce-registrations [parsed-response]
   (-> parsed-response
       (map-keys parse-int)
       (map-vals #(map parse-int %))))
 
-(defn coerce-contagem-matriculas [parsed-response]
+(defn coerce-registrations-count [parsed-response]
   (-> parsed-response
       (map-kv parse-int)))
 
 (def bookmark-settings
-  {:matriculas {:url "https://matricula.ufabc.edu.br/cache/matriculas.js"
-                :doc "Mapa com lista de disciplinas matrículadas para cada id de aluno"
-                :sample-path "resources/matriculas_sample.txt"
-                :coerce-fn coerce-matriculas}
-   :contagem-matriculas {:url "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
-                         :doc "Mapa de número de requisições por disciplina"
-                         :sample-path "resources/contagem_matriculas_sample.txt"
-                         :coerce-fn coerce-contagem-matriculas}
-   :todas-disciplinas {:url "https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
-                       :doc "Lista de informações das disciplinas"
-                       :sample-path "resources/todas_disciplinas_sample.txt"}})
+  {:registrations {:url "https://matricula.ufabc.edu.br/cache/matriculas.js"
+                   :doc "Map where the keys are student ids and the value is a list with ids of the courses that they are registered"
+                   :sample-path "resources/registrations_sample.txt"
+                   :coerce-fn coerce-registrations}
+   :registrations-count {:url "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
+                         :doc "Map where the keys are course ids and the value is the number of registered students in that course"
+                         :sample-path "resources/registrations_count_sample.txt"
+                         :coerce-fn coerce-registrations-count}
+   :courses {:url "https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
+             :doc "List of maps with information about each course"
+             :sample-path "resources/courses_sample.txt"}})
 
 (defn alert-error! [exception]
-  (slack/message "#random" (str "ERRO: \n" (.getMessage exception)))
+  (slack/message "#random" (str "ERROR: \n" (.getMessage exception)))
   (println (str "Raw error:\n"
                 exception
                 "\nError message:\n"
@@ -90,8 +90,8 @@
       (replace-first #".*=" "")
       json/parse-string))
 
-(def disciplinas
-  (delay (-> :todas-disciplinas
+(def courses
+  (delay (-> :courses
              (bookmarks->url bookmark-settings)
              http-get!
              :body
@@ -99,10 +99,10 @@
              (replace-first #"\n" "")
              (json/parse-string true))))
 
-(defn id->disciplina [id]
-  (first (filter #(= id (str (:id %))) @disciplinas)))
+(defn id->course [id]
+  (first (filter #(= id (str (:id %))) @courses)))
 
-(def important-ids
+(def monitored-ids
   #{670 ; Fenômenos de Transporte A-noturno (Santo André)
     809 ; Materiais e Suas Propriedades A1-noturno (Santo André)
     679 ; Fenômenos de Transporte B1-noturno (São Bernardo)
@@ -111,20 +111,18 @@
     440 ; Compostagem A-noturno (Santo André)
     })
 
-(defn alert! [disciplina open-slots]
-  (let [msg (str (:nome disciplina) " tem " open-slots " vagas!")]
+(defn alert! [course open-slots]
+  (let [msg (str (:nome course) " tem " open-slots " vagas!")]
     (println msg)
     (slack/message "#random" msg)
-    (when (important-ids (:id disciplina))
+    (when (monitored-ids (:id course))
       (slack/message "#general" msg))))
 
 (defn alert-when-open-slots! [[id req]]
-  (let [disciplina (id->disciplina id)
-        open-slots (- (:vagas disciplina) (parse-int req))]
-    (when (and (> open-slots 0)
-               #_(= (:nome_campus disciplina) "Campus Santo André")
-               #_(re-find #"Noturno" (:nome disciplina)))
-      (alert! disciplina open-slots))))
+  (let [course (id->course id)
+        open-slots (- (:vagas course) (parse-int req))]
+    (when (> open-slots 0)
+      (alert! course open-slots))))
 
 (defn get-updates [old new]
   (second (diff old new)))
@@ -144,20 +142,20 @@
 
 (defn start! []
   (slack/message "#random" "Starting!")
-  (try (loop [contagem (-> :contagem-matriculas
-                           (bookmarks->url bookmark-settings)
-                           http-get!
-                           parse-response)]
-         (let [updated-contagem (-> :contagem-matriculas
-                                    (bookmarks->url bookmark-settings)
-                                    http-get!
-                                    parse-response)]
-           (if (= contagem updated-contagem)
+  (try (loop [count (-> :registrations-count
+                        (bookmarks->url bookmark-settings)
+                        http-get!
+                        parse-response)]
+         (let [updated-count (-> :registrations-count
+                                 (bookmarks->url bookmark-settings)
+                                 http-get!
+                                 parse-response)]
+           (if (= count updated-count)
              (println "Nothing changed")
              (do (println "Changes!")
-                 (verify-and-alert! contagem updated-contagem)))
+                 (verify-and-alert! count updated-count)))
            (Thread/sleep 10000)
-           (recur updated-contagem)))
+           (recur updated-count)))
        (catch Exception ex (log-exception! ex))))
 
 (defn -main
