@@ -8,14 +8,6 @@
 
 (stest/instrument)
 
-(deftest coerce-registrations
-  (is (match? (m/equals {2034 [8992]
-                         4994 [8595 8492]
-                         526 [8417 8662 9190]})
-        (http/coerce-registrations {"2034" ["8992"]
-                                     "4994" ["8595" "8492"]
-                                     "526" ["8417" "8662" "9190"]}))))
-
 (deftest coerce-registrations-count
   (is (match? (m/equals {8290 77
                          8623 1
@@ -55,13 +47,6 @@
                (= 200 status))))))
 
 (deftest parse-response
-  (is (match? (m/equals {2034 [8992]
-                         4994 [8595 8492]
-                         526 [8417 8662 9190]})
-        (let [{:keys [small-sample coerce-fn json-coerce-key-fn]} (:registrations http/bookmark-settings)]
-          (http/parse-response small-sample coerce-fn json-coerce-key-fn)))
-      "Can parse registrations")
-
   (is (match? (m/equals {8682 94
                          8623 1
                          8290 77})

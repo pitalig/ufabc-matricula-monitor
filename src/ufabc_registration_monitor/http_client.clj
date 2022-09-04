@@ -5,11 +5,6 @@
             [ufabc-registration-monitor.utils :as utils]
             [clojure.string :as string]))
 
-(defn coerce-registrations [parsed-response]
-  (-> parsed-response
-      (utils/map-keys utils/parse-int)
-      (utils/map-vals #(map utils/parse-int %))))
-
 (defn coerce-registrations-count [parsed-response]
   (->> parsed-response
        (map (fn [[k v]]
@@ -23,15 +18,7 @@
     (map parse-course parsed-response)))
 
 (def bookmark-settings
-  {; TODO: Remove registration and map-keys, map-vals, map-kv
-   :registrations {:used false
-                   :url "https://matricula.ufabc.edu.br/cache/matriculas.js"
-                   :doc "Map where the keys are student ids and the value is a list with ids of the courses that they are registered"
-                   :sample-path "resources/registrations_sample.txt"
-                   :small-sample {:body "matriculas={\"2034\":[\"8992\"],\"4994\":[\"8595\",\"8492\"],\"526\":[\"8417\",\"8662\",\"9190\"]};\n"}
-                   :coerce-fn coerce-registrations
-                   :json-coerce-key-fn false}
-   :registrations-count {:used true
+  {:registrations-count {:used true
                          :url "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
                          :doc "Map where the keys are course ids and the value is the number of registered students in that course"
                          :sample-path "resources/registrations_count_sample.txt"
