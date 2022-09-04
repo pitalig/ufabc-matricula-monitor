@@ -17,4 +17,5 @@
             (str ":fire: :fire: :fire: :fire: \n"
                  "data: " (ex-data ex) "\n"
                  "message: " (ex-message ex) "\n"
-                 "cause: " (ex-cause ex) "\n")))
+                 "cause: " (ex-cause ex) "\n"))
+  ex)
