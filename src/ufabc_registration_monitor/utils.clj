@@ -12,7 +12,7 @@
                                                           {:username "Registration Monitor"}))
    :log-fn! println
    :sleep-fn! (fn [milis] (Thread/sleep milis))
-   :recur? (atom true)
+   :active? (atom true)
    :monitored-ids #{670 ; Fenômenos de Transporte A-noturno (Santo André)
                     809 ; Materiais e Suas Propriedades A1-noturno (Santo André)
                     679 ; Fenômenos de Transporte B1-noturno (São Bernardo)

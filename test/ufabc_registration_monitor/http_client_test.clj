@@ -6,9 +6,8 @@
             [ufabc-registration-monitor.http-client :as http]))
 
 (deftest parse-response
-  (testing "Every bookmark can be parsed using the corresponding samples and coercer-fn")
-  (doall
-    (for [[name settings] http/bookmark-settings]
+  (testing "Every bookmark can be parsed using the corresponding samples and coercer-fn"
+    (doseq [[name settings] http/bookmark-settings]
       (is (match? (m/equals (:coerced-sample settings))
                   (http/parse-response (:sample settings) (:coerce-fn settings)))
           (str "Can parse " name)))))

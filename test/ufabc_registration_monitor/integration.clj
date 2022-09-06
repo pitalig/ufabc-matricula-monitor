@@ -11,7 +11,7 @@
   (Thread/sleep 100))
 
 (deftest integration
-  (let [recur? (atom true)
+  (let [active? (atom true)
         mock-http-responses (atom {"https://matricula.ufabc.edu.br/cache/todasDisciplinas.js"
                                    {:body "todasDisciplinas=[{\"nome\":\"Quantum Physics\",
                                                               \"vagas\":100,
@@ -27,7 +27,7 @@
                                             :slack-post-message-fn! (fn [message] (swap! slack-messages conj message))
                                             :log-fn! #(when false (println (str "Log: " %)))
                                             :sleep-fn! #(when false (println (str "Sleep: " %)))
-                                            :recur? recur?
+                                            :active? active?
                                             :monitored-ids #{2}}))]
 
     (Thread/sleep 100)
@@ -56,4 +56,4 @@
               {:channel "#general", :text "Algorithms has 1 slots!"}]
              @slack-messages)))
 
-    (reset! recur? false)))
+    (reset! active? false)))
