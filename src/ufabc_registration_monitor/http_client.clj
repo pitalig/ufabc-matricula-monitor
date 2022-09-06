@@ -1,7 +1,7 @@
 (ns ufabc-registration-monitor.http-client
   (:require [cheshire.core :as json]
-            [ufabc-registration-monitor.utils :as utils]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [ufabc-registration-monitor.utils :as utils]))
 
 (defn coerce-registrations-count [json-response]
   (->> json-response
@@ -35,8 +35,8 @@
              :doc "List of maps with information about each course"
              :coerce-fn coerce-courses
              :sample {:body "todasDisciplinas=[{\"horarios\":[{\"horas\":[\"19:00\",\"19:30\",\"20:00\",\"20:30\",\"21:00\"],\"periodicidade_extenso\":\" - semanal\",\"semana\":2},{\"horas\":[\"21:00\",\"21:30\",\"22:00\",\"22:30\",\"23:00\"],\"periodicidade_extenso\":\" - semanal\",\"semana\":4}],\"nome\":\"Aerodinamica I A-Noturno (Sao Bernardo)\",\"vagas\":86,\"creditos\":4,\"obrigatoriedades\":[{\"curso_id\":250,\"obrigatoriedade\":\"obrigatoria\"}],\"vagas_ingressantes\":null,\"codigo\":\"ESTS016-17\",\"id\":8220,\"nome_campus\":\"Campus Sao Bernardo do Campo\",\"recomendacoes\":null,\"campus\":18,\"tpi\":[4,0,5]},{\"id\":8221,\"nome\":\"Aerodinamica I B-Noturno (Sao Bernardo)\",\"vagas\":86}];\n"}
-             :coerced-sample  [{:id 8220 :name "Aerodinamica I A-Noturno (Sao Bernardo)" :slots 86}
-                               {:id 8221 :name "Aerodinamica I B-Noturno (Sao Bernardo)" :slots 86}]}})
+             :coerced-sample [{:id 8220 :name "Aerodinamica I A-Noturno (Sao Bernardo)" :slots 86}
+                              {:id 8221 :name "Aerodinamica I B-Noturno (Sao Bernardo)" :slots 86}]}})
 
 (defn get!
   "Send a http get to an url.

@@ -1,8 +1,8 @@
 (ns ufabc-registration-monitor.core-test
   (:require [clojure.test :refer :all]
-            [ufabc-registration-monitor.core :as core]
+            [matcher-combinators.matchers :as m]
             [matcher-combinators.test :refer [match?]]
-            [matcher-combinators.matchers :as m]))
+            [ufabc-registration-monitor.core :as core]))
 
 (deftest get-updates-test
   (is (match? (m/equals {:b 3 :c 3})
