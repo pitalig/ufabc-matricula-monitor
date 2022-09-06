@@ -27,14 +27,13 @@
 
 (defn start-worker! [{:keys [log-fn! slack-post-message-fn! sleep-fn! recur?] :as system}]
   (try
-    (slack/message! "#random" "Starting!" slack-post-message-fn!)
+    (slack/message! {:channel "#random" :text "Starting!"} slack-post-message-fn!)
     (let [courses (http/get-bookmark! :courses http/bookmark-settings system)]
       (loop [registrations-count (http/get-bookmark! :registrations-count http/bookmark-settings system)]
         (sleep-fn! 1000)
         (when @recur?
           (recur (check-updates! courses registrations-count system)))))
-    (catch Exception ex (do (utils/log-exception! ex log-fn!)
-                            (slack/log-exception! ex slack-post-message-fn!)))))
+    (catch Exception ex (utils/log-exception! ex log-fn!))))
 
 (defn -main
   [& args]
