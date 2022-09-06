@@ -2,7 +2,6 @@
   (:gen-class)
   (:require [clojure.data :refer [diff]]
             [ufabc-registration-monitor.http-client :as http]
-            [ufabc-registration-monitor.slack :as slack]
             [ufabc-registration-monitor.utils :as utils]))
 
 (defn maybe-alert [course-id registration-count courses monitored-ids]
@@ -22,12 +21,12 @@
       (doseq [[course-id registration-count] (get-updates registrations-count updated-registrations-count)]
         (some-> (maybe-alert course-id registration-count courses monitored-ids)
                 (utils/log! log-fn!)
-                (slack/message! slack-post-message-fn!))))
+                slack-post-message-fn!)))
     updated-registrations-count))
 
 (defn start-worker! [{:keys [log-fn! slack-post-message-fn! sleep-fn! recur?] :as system}]
   (try
-    (slack/message! {:channel "#random" :text "Starting!"} slack-post-message-fn!)
+    (slack-post-message-fn! {:channel "#random" :text "Starting!"})
     (let [courses (http/get-bookmark! :courses http/bookmark-settings system)]
       (loop [registrations-count (http/get-bookmark! :registrations-count http/bookmark-settings system)]
         (sleep-fn! 1000)

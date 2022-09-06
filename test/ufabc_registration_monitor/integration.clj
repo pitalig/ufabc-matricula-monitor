@@ -24,8 +24,7 @@
                                                                \"2\":\"50\"};"}})
         slack-messages (atom [])
         worker (future (core/start-worker! {:http-get-fn! (fn [url _params] (get @mock-http-responses url))
-                                            :slack-post-message-fn! (fn [_connection channel text _params]
-                                                                      (swap! slack-messages conj {:channel channel :text text}))
+                                            :slack-post-message-fn! (fn [message] (swap! slack-messages conj message))
                                             :log-fn! #(when false (println (str "Log: " %)))
                                             :sleep-fn! #(when false (println (str "Sleep: " %)))
                                             :recur? recur?

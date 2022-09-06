@@ -4,7 +4,12 @@
 
 (def main-system
   {:http-get-fn! clj-http.client/get
-   :slack-post-message-fn! clj-slack.chat/post-message
+   :slack-post-message-fn! (fn [{:keys [channel text]}]
+                             (clj-slack.chat/post-message {:api-url "https://slack.com/api"
+                                                           :token (System/getenv "slack_token")}
+                                                          channel
+                                                          text
+                                                          {:username "Registration Monitor"}))
    :log-fn! println
    :sleep-fn! (fn [milis] (Thread/sleep milis))
    :recur? (atom true)
@@ -15,6 +20,10 @@
                     425 ; Ecologia do Ambiente Urbano A-noturno (Santo André)
                     440 ; Compostagem A-noturno (Santo André)
                     }})
+
+(comment
+  ((:slack-post-message-fn! main-system) {:channel "#general" :text "Test"})
+  )
 
 (defn parse-int [s]
   (some->> s
