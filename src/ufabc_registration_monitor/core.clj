@@ -24,7 +24,7 @@
   [courses registrations-count {:keys [log-fn! monitored-ids slack-post-message-fn!] :as system}]
   (let [new-registrations-count (http/get-bookmark! :registrations-count http/bookmark-settings system)]
     (if (= registrations-count new-registrations-count)
-      (slack-post-message-fn! {:channel "#random" :text "Nothing changed"})
+      (log-fn! "Nothing changed")
       (doseq [[course-id registration-count] (get-updates registrations-count new-registrations-count)]
         (some-> (maybe-alert course-id registration-count courses monitored-ids)
                 (utils/log! log-fn!)
