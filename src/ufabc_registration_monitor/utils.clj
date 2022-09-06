@@ -13,28 +13,27 @@
    :log-fn! println
    :sleep-fn! (fn [milis] (Thread/sleep milis))
    :active? (atom true)
-   :monitored-ids #{670 ; Fenômenos de Transporte A-noturno (Santo André)
-                    809 ; Materiais e Suas Propriedades A1-noturno (Santo André)
-                    679 ; Fenômenos de Transporte B1-noturno (São Bernardo)
-                    931 ; Habitação e Assentamentos Humanos A-noturno (Santo André)
-                    425 ; Ecologia do Ambiente Urbano A-noturno (Santo André)
-                    440 ; Compostagem A-noturno (Santo André)
-                    }})
+   :monitored-ids #{670 440}})
 
 (comment
   ((:slack-post-message-fn! main-system) {:channel "#general" :text "Test"})
+  ((:http-get-fn! main-system) "https://www.google.com")
+  ((:log-fn! main-system) "Hello world")
   )
 
-(defn parse-int [s]
+(defn parse-int
+  [s]
   (some->> s
            (re-find #"\d+")
            (Integer.)))
 
-(defn log! [data log-fn!]
+(defn log!
+  [data log-fn!]
   (log-fn! data)
   data)
 
-(defn log-exception! [ex log-fn!]
+(defn log-exception!
+  [ex log-fn!]
   (log-fn! {:exception/data (ex-data ex)
             :exception/message (ex-message ex)
             :exception/cause (ex-cause ex)}))

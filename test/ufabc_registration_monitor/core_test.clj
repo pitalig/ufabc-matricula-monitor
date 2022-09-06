@@ -4,6 +4,20 @@
             [matcher-combinators.test :refer [match?]]
             [ufabc-registration-monitor.core :as core]))
 
+(deftest id->course-test
+  (is (match? (m/equals {:id 1 :name "Quantum Physics" :slots 86})
+              (core/id->course 1 [{:id 1 :name "Quantum Physics" :slots 86}
+                                  {:id 2 :name "Algorithms" :slots 90}]))
+      "Returns course with that id")
+
+  (is (match? (m/equals {:id 1 :name "Quantum Physics" :slots 86})
+              (core/id->course 1 [{:id 1 :name "Quantum Physics" :slots 86}
+                                  {:id 1 :name "Algorithms" :slots 90}]))
+      "When there are repeated ids, returns the first one")
+
+  (is (nil? (core/id->course 10 [{:id 1 :name "Quantum Physics" :slots 86}]))
+      "When not found, returns nil"))
+
 (deftest get-updates-test
   (is (match? (m/equals {:b 3 :c 3})
               (core/get-updates {:a 1 :b 2} {:a 1 :b 3 :c 3}))

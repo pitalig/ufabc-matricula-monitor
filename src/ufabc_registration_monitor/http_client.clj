@@ -3,26 +3,29 @@
             [clojure.string :as string]
             [ufabc-registration-monitor.utils :as utils]))
 
-(defn coerce-registrations-count [json-response]
+(defn parse-response
+  [raw-response coerce-fn]
+  (-> raw-response
+      :body
+      (string/replace-first #".*=" "")
+      (string/replace-first #"\n" "")
+      coerce-fn))
+
+(defn coerce-registrations-count
+  [json-response]
   (->> json-response
        json/parse-string
        (map (fn [[k v]]
               [(utils/parse-int k) (utils/parse-int v)]))
        (into {})))
 
-(defn coerce-courses [json-response]
+(defn coerce-courses
+  [json-response]
   (let [parsed-response (json/parse-string json-response true)
         parse-course (fn [course] {:id (:id course)
                                    :name (:nome course)
                                    :slots (:vagas course)})]
     (map parse-course parsed-response)))
-
-(defn parse-response [raw-response coerce-fn]
-  (-> raw-response
-      :body
-      (string/replace-first #".*=" "")
-      (string/replace-first #"\n" "")
-      coerce-fn))
 
 (def bookmark-settings
   {:registrations-count {:url "https://matricula.ufabc.edu.br/cache/contagemMatriculas.js"
@@ -53,7 +56,8 @@
             (sleep-fn! (* t base-interval-sec 1000))
             (recur (inc t)))))))
 
-(defn get-bookmark! [bookmark-key bookmarks system]
+(defn get-bookmark!
+  [bookmark-key bookmarks system]
   (let [{:keys [url coerce-fn]} (get bookmarks bookmark-key)]
     (-> (get! url system)
         (parse-response coerce-fn))))
