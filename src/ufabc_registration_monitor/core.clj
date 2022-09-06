@@ -38,7 +38,7 @@
     (let [courses (http/get-bookmark! :courses http/bookmark-settings system)
           initial-registration-count (http/get-bookmark! :registrations-count http/bookmark-settings system)]
       (loop [registrations-count initial-registration-count]
-        (sleep-fn! 1000)
+        (sleep-fn! 5000)
         (when @active?
           (recur (check-updates! courses registrations-count system)))))
     (catch Exception ex (utils/log-exception! ex log-fn!))))
